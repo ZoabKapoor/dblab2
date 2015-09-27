@@ -26,6 +26,10 @@ public class Tuple implements Serializable {
      */
     public Tuple(TupleDesc td) {
     	resetTupleDesc(td);
+    	fields = new Field[td.numFields()];
+    	for (int i = 0; i < td.numFields(); ++i) {
+    		fields[i] = null;
+    	}
     }
 
     /**
@@ -107,9 +111,5 @@ public class Tuple implements Serializable {
     public void resetTupleDesc(TupleDesc td)
     {
     	schema = td;
-    	fields = new Field[td.numFields()];
-    	for (int i = 0; i < td.numFields(); ++i) {
-    		fields[i] = null;
-    	}
     }
 }
