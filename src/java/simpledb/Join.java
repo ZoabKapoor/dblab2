@@ -8,6 +8,14 @@ import java.util.*;
 public class Join extends Operator {
 
     private static final long serialVersionUID = 1L;
+    
+    private DbIterator outerIterator;
+    private DbIterator innerIterator;
+    private TupleDesc resultTupleDesc;
+    private JoinPredicate joinPredicate;
+    // We need to keep track of the outer tuple between calls to 
+    // fetchNext(), so we can't have it be a local variable in fetchNext()
+    private Tuple outerTuple;
 
     /**
      * Constructor. Accepts to children to join and the predicate to join them
@@ -21,12 +29,15 @@ public class Join extends Operator {
      *            Iterator for the right(inner) relation to join
      */
     public Join(JoinPredicate p, DbIterator child1, DbIterator child2) {
-        // some code goes here
+        joinPredicate = p;
+        outerIterator = child1;
+        innerIterator = child2;
+        resultTupleDesc = TupleDesc.merge(outerIterator.getTupleDesc(), innerIterator.getTupleDesc());
+        outerTuple = null;
     }
 
     public JoinPredicate getJoinPredicate() {
-        // some code goes here
-        return null;
+        return joinPredicate;
     }
 
     /**
@@ -35,8 +46,7 @@ public class Join extends Operator {
      *       alias or table name.
      * */
     public String getJoinField1Name() {
-        // some code goes here
-        return null;
+    	return outerIterator.getTupleDesc().getFieldName(joinPredicate.getField1());
     }
 
     /**
@@ -45,8 +55,7 @@ public class Join extends Operator {
      *       alias or table name.
      * */
     public String getJoinField2Name() {
-        // some code goes here
-        return null;
+        return innerIterator.getTupleDesc().getFieldName(joinPredicate.getField2());
     }
 
     /**
@@ -54,21 +63,25 @@ public class Join extends Operator {
      *      implementation logic.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return resultTupleDesc;
     }
 
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        // some code goes here
+    	outerIterator.open();
+    	innerIterator.open();
+    	super.open();
     }
 
     public void close() {
-        // some code goes here
+        super.close();
+        innerIterator.close();
+        outerIterator.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+        outerIterator.rewind();
+        innerIterator.rewind();
     }
 
     /**
@@ -90,19 +103,42 @@ public class Join extends Operator {
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        // some code goes here
+        while (outerIterator.hasNext() || outerTuple != null) {
+        	if (outerTuple == null) {
+        		outerTuple = outerIterator.next();
+        	}
+        	while (innerIterator.hasNext()) {
+        		Tuple innerTuple = innerIterator.next();
+        		if (joinPredicate.filter(outerTuple, innerTuple)) {
+        			Tuple result = new Tuple(resultTupleDesc);
+        			Iterator<Field> outerTupleIterator = outerTuple.fields();
+        			Iterator<Field> innerTupleIterator = innerTuple.fields();
+        			for (int i = 0; i < resultTupleDesc.numFields(); ++i) {
+        				if (outerTupleIterator.hasNext()) {
+        					result.setField(i, outerTupleIterator.next());
+        				} else {
+        					result.setField(i, innerTupleIterator.next());
+        				}
+        			}
+        			return result;
+        		}
+        	}
+        	innerIterator.rewind();
+        	outerTuple = null;
+        }
         return null;
     }
 
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        return null;
+        return new DbIterator[] { outerIterator, innerIterator };
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
+        outerIterator = children[0];
+        innerIterator = children[1];
+        resultTupleDesc = TupleDesc.merge(outerIterator.getTupleDesc(), innerIterator.getTupleDesc());
     }
 
 }
