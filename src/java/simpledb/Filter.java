@@ -11,6 +11,7 @@ public class Filter extends Operator {
     
     private Predicate predicate;
     private DbIterator childIterator;
+    private TupleDesc resultTupleDesc;
 
     /**
      * Constructor accepts a predicate to apply and a child operator to read
@@ -24,6 +25,7 @@ public class Filter extends Operator {
     public Filter(Predicate p, DbIterator child) {
         predicate = p;
         childIterator = child;
+        resultTupleDesc = child.getTupleDesc();
     }
 
     public Predicate getPredicate() {
@@ -31,7 +33,7 @@ public class Filter extends Operator {
     }
 
     public TupleDesc getTupleDesc() {
-        return childIterator.getTupleDesc();
+        return resultTupleDesc;
     }
 
     public void open() throws DbException, NoSuchElementException,
@@ -71,14 +73,13 @@ public class Filter extends Operator {
 
     @Override
     public DbIterator[] getChildren() {
-    	DbIterator[] children = new DbIterator[1];
-        children[0] = childIterator;
-        return children;
+    	return new DbIterator[] { childIterator };
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
         childIterator = children[0];
+        resultTupleDesc = childIterator.getTupleDesc();
     }
 
 }
