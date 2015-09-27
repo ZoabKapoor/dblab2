@@ -8,6 +8,9 @@ import java.util.*;
 public class Filter extends Operator {
 
     private static final long serialVersionUID = 1L;
+    
+    private Predicate predicate;
+    private DbIterator childIterator;
 
     /**
      * Constructor accepts a predicate to apply and a child operator to read
@@ -19,30 +22,31 @@ public class Filter extends Operator {
      *            The child operator
      */
     public Filter(Predicate p, DbIterator child) {
-        // some code goes here
+        predicate = p;
+        childIterator = child;
     }
 
     public Predicate getPredicate() {
-        // some code goes here
-        return null;
+        return predicate;
     }
 
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return childIterator.getTupleDesc();
     }
 
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        // some code goes here
+    	childIterator.open();
+    	super.open();
     }
 
     public void close() {
-        // some code goes here
+    	super.close();
+    	childIterator.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+    	childIterator.rewind();
     }
 
     /**
@@ -56,19 +60,25 @@ public class Filter extends Operator {
      */
     protected Tuple fetchNext() throws NoSuchElementException,
             TransactionAbortedException, DbException {
-        // some code goes here
+        while (childIterator.hasNext()) {
+        	Tuple candidate = childIterator.next();
+        	if (predicate.filter(candidate)) {
+        		return candidate;
+        	}
+        }
         return null;
     }
 
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        return null;
+    	DbIterator[] children = new DbIterator[1];
+        children[0] = childIterator;
+        return children;
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
+        childIterator = children[0];
     }
 
 }
