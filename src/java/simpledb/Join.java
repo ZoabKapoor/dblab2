@@ -82,6 +82,7 @@ public class Join extends Operator {
     public void rewind() throws DbException, TransactionAbortedException {
         outerIterator.rewind();
         innerIterator.rewind();
+        outerTuple = null;
     }
 
     /**
