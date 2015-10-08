@@ -1,11 +1,20 @@
 package simpledb;
 
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Knows how to compute some aggregate over a set of StringFields.
  */
 public class StringAggregator implements Aggregator {
 
     private static final long serialVersionUID = 1L;
+    
+    private int groupByFieldNum;
+    
+    private ConcurrentHashMap<Field,Tuple> aggregatesWithGrouping;
+    private Tuple aggregateNoGrouping;
+    private TupleDesc resultTupleDesc;
 
     /**
      * Aggregate constructor
@@ -17,7 +26,18 @@ public class StringAggregator implements Aggregator {
      */
 
     public StringAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
-        // some code goes here
+        if (what != Op.COUNT) {
+        	throw new IllegalArgumentException("Can't aggregate over strings unless using operator COUNT!");
+        }
+        if (gbfield != Aggregator.NO_GROUPING) {
+        	aggregatesWithGrouping = new ConcurrentHashMap<Field, Tuple>();
+        	resultTupleDesc = new TupleDesc( new Type[] {gbfieldtype, Type.INT_TYPE});
+        } else {
+        	resultTupleDesc = new TupleDesc( new Type[] {Type.INT_TYPE});
+        	aggregateNoGrouping = new Tuple(resultTupleDesc);
+        	aggregateNoGrouping.setField(0, new IntField(0));
+        }
+    	groupByFieldNum = gbfield;
     }
 
     /**
@@ -25,7 +45,21 @@ public class StringAggregator implements Aggregator {
      * @param tup the Tuple containing an aggregate field and a group-by field
      */
     public void mergeTupleIntoGroup(Tuple tup) {
-        // some code goes here
+        if (groupByFieldNum == Aggregator.NO_GROUPING) {
+        	IntField currentCount = (IntField) aggregateNoGrouping.getField(0);
+        	IntField newCount = new IntField(currentCount.getValue()+1);
+        	aggregateNoGrouping.setField(0, newCount);
+        } else if (aggregatesWithGrouping.containsKey(tup.getField(groupByFieldNum))) {
+        	Tuple groupCounter = aggregatesWithGrouping.get(tup.getField(groupByFieldNum));
+        	IntField currentCount = (IntField) groupCounter.getField(1);
+        	IntField newCount = new IntField(currentCount.getValue()+1);
+        	groupCounter.setField(1, newCount);
+        } else {
+        	Tuple groupCounter = new Tuple(resultTupleDesc);
+        	groupCounter.setField(0, tup.getField(groupByFieldNum));
+        	groupCounter.setField(1, new IntField(1));
+        	aggregatesWithGrouping.put(groupCounter.getField(0), groupCounter);
+        }
     }
 
     /**
@@ -37,8 +71,13 @@ public class StringAggregator implements Aggregator {
      *   aggregate specified in the constructor.
      */
     public DbIterator iterator() {
-        // some code goes here
-        throw new UnsupportedOperationException("please implement me for lab2");
+        if (groupByFieldNum == Aggregator.NO_GROUPING) {
+        	ArrayList<Tuple> resultList = new ArrayList<Tuple>();
+        	resultList.add(aggregateNoGrouping);
+        	return new TupleIterator(resultTupleDesc, resultList);
+        } else {
+        	return new TupleIterator(resultTupleDesc, aggregatesWithGrouping.values());
+        }
     }
 
 }
