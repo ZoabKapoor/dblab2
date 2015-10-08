@@ -38,6 +38,8 @@ public class StringAggregator implements Aggregator {
         	aggregateNoGrouping.setField(0, new IntField(0));
         }
     	groupByFieldNum = gbfield;
+    	// Note that we can throw away afield here, because a string aggregator basically just
+    	// counts tuples, so we don't really need a particular field to count over. 
     }
 
     /**
