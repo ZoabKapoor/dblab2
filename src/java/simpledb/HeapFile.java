@@ -116,7 +116,7 @@ public class HeapFile implements DbFile {
     	ArrayList<Page> result = new ArrayList<Page>();
     	for (int i = 0; i < numPages(); ++i) {
     		HeapPageId pid = new HeapPageId(getId(), i);
-    		HeapPage candidate = (HeapPage) readPage(pid);
+    		HeapPage candidate = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
     		if (candidate.getNumEmptySlots() != 0)  {
     			candidate.insertTuple(t);
     			writePage(candidate);
@@ -139,7 +139,7 @@ public class HeapFile implements DbFile {
     		throw new DbException("The tuple to delete isn't in this HeapFile!");
     	} else {
     		PageId pid = t.getRecordId().getPageId();
-    		HeapPage toModify = (HeapPage) readPage(pid);
+    		HeapPage toModify = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
     		toModify.deleteTuple(t);
     		try {
 				writePage(toModify);

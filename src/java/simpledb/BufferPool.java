@@ -1,7 +1,7 @@
 package simpledb;
 
 import java.io.*;
-
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -23,6 +23,7 @@ public class BufferPool {
     
     private ConcurrentHashMap<PageId,Page> cache;
     private int pagesFilled;
+    private int maxPages;
 
     /** Default number of pages passed to the constructor. This is used by
     other classes. BufferPool should use the numPages argument to the
@@ -40,6 +41,7 @@ public class BufferPool {
     public BufferPool(int numPages) {
         cache = new ConcurrentHashMap<PageId, Page>();
         pagesFilled = 0;
+        maxPages = numPages;
     }
     
     public static int getPageSize() {
@@ -76,7 +78,7 @@ public class BufferPool {
     			return candidate;
     		}
     	}
-        if (pagesFilled == DEFAULT_PAGES) {
+        if (pagesFilled == maxPages) {
         	throw new DbException("Too many requests! And I'm too mild mannered to evict.");
         } else {
         	int tableId = pid.getTableId();
@@ -147,8 +149,11 @@ public class BufferPool {
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
+    	DbFile fileToModify = Database.getCatalog().getDatabaseFile(tableId);
+    	ArrayList<Page> pagesModified = fileToModify.insertTuple(tid, t);
+    	for (Page page : pagesModified) {
+    		page.markDirty(true, tid);
+    	}
     }
 
     /**
@@ -165,8 +170,11 @@ public class BufferPool {
      */
     public  void deleteTuple(TransactionId tid, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
+    	DbFile fileToModify = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
+    	ArrayList<Page> pagesModified = fileToModify.insertTuple(tid, t);
+    	for (Page page : pagesModified) {
+    		page.markDirty(true, tid);
+    	}
     }
 
     /**
