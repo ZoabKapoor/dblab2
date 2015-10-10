@@ -91,8 +91,16 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public void writePage(Page page) throws IOException {
-        // some code goes here
-        // not necessary for lab1
+    	RandomAccessFile fileToWrite = null;
+        try {
+			fileToWrite = new RandomAccessFile(file, "rw");
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException("Couldn't find the file: " + file.toString());
+		}
+        fileToWrite.seek((long) page.getId().pageNumber()*BufferPool.PAGE_SIZE); 
+		fileToWrite.write(page.getPageData(), 0, BufferPool.PAGE_SIZE);
+		fileToWrite.close();
+		
     }
 
     /**
@@ -105,17 +113,42 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        return null;
-        // not necessary for lab1
+    	ArrayList<Page> result = new ArrayList<Page>();
+    	for (int i = 0; i < numPages(); ++i) {
+    		HeapPageId pid = new HeapPageId(getId(), i);
+    		HeapPage candidate = (HeapPage) readPage(pid);
+    		if (candidate.getNumEmptySlots() != 0)  {
+    			candidate.insertTuple(t);
+    			writePage(candidate);
+    			result.add(candidate);
+    			return result;
+    		}
+    	}
+    	HeapPage newPage = new HeapPage(new HeapPageId(getId(), numPages()), new byte[BufferPool.PAGE_SIZE]);
+    	newPage.insertTuple(t);
+    	writePage(newPage);
+    	result.add(newPage);
+    	return result;
     }
 
     // see DbFile.java for javadocs
     public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t) throws DbException,
             TransactionAbortedException {
-        // some code goes here
-        return null;
-        // not necessary for lab1
+    	ArrayList<Page> result = new ArrayList<Page>();
+    	if (t.getRecordId().getPageId().getTableId() != getId()) {
+    		throw new DbException("The tuple to delete isn't in this HeapFile!");
+    	} else {
+    		PageId pid = t.getRecordId().getPageId();
+    		HeapPage toModify = (HeapPage) readPage(pid);
+    		toModify.deleteTuple(t);
+    		try {
+				writePage(toModify);
+			} catch (IOException e) {
+				throw new DbException("The tuple could not be deleted!");
+			}
+    		result.add(toModify);
+    		return result;	
+    	}
     }
 
     // see DbFile.java for javadocs
