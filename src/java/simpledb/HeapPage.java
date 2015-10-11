@@ -357,7 +357,7 @@ public class HeapPage implements Page {
     	@Override
     	public boolean hasNext() {
     		for (int i = posInPage; i < page.getNumTuples(); ++i) {
-    			if (page.tuples[i] instanceof Tuple) {
+    			if (isSlotUsed(i)) {
     				return true;
     			}
     		}
@@ -368,7 +368,7 @@ public class HeapPage implements Page {
     	public Tuple next() {
     		for (int i = posInPage; i < page.getNumTuples(); ++i) {
     			++posInPage;
-    			if (page.tuples[i] instanceof Tuple) {
+    			if (isSlotUsed(i)) {
     				return page.tuples[i];
     			}
     		}

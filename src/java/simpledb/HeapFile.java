@@ -119,7 +119,6 @@ public class HeapFile implements DbFile {
     		HeapPage candidate = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
     		if (candidate.getNumEmptySlots() != 0)  {
     			candidate.insertTuple(t);
-    			writePage(candidate);
     			result.add(candidate);
     			return result;
     		}
@@ -141,11 +140,6 @@ public class HeapFile implements DbFile {
     		PageId pid = t.getRecordId().getPageId();
     		HeapPage toModify = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
     		toModify.deleteTuple(t);
-    		try {
-				writePage(toModify);
-			} catch (IOException e) {
-				throw new DbException("The tuple could not be deleted!");
-			}
     		result.add(toModify);
     		return result;	
     	}

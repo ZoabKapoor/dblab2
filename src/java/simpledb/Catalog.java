@@ -121,7 +121,7 @@ public class Catalog {
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
         Table table = tables.get(tableid);
         if (table == null) {
-        	throw new NoSuchElementException("Table with tableid :" + tableid + " doesn't exist!");
+        	throw new NoSuchElementException("Table with tableid: " + tableid + " doesn't exist!");
         } else {
         	return table.file;
         }
