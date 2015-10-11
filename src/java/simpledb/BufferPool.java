@@ -183,9 +183,9 @@ public class BufferPool {
      *     break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-        // some code goes here
-        // not necessary for lab1
-
+        for (PageId pid : cache.keySet()) {
+        	flushPage(pid);
+        }
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -203,8 +203,12 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized  void flushPage(PageId pid) throws IOException {
-        // some code goes here
-        // not necessary for lab1
+    	Page page = cache.get(pid);
+    	if (page.isDirty() != null) {
+    		DbFile fileToWrite = Database.getCatalog().getDatabaseFile(page.getId().getTableId());
+    		fileToWrite.writePage(page);
+    		page.markDirty(false, null);
+    	}
     }
 
     /** Write all pages of the specified transaction to disk.
