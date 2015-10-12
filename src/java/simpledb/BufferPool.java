@@ -2,6 +2,8 @@ package simpledb;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -79,14 +81,13 @@ public class BufferPool {
     		}
     	}
         if (pagesFilled == maxPages) {
-        	throw new DbException("Too many requests! And I'm too mild mannered to evict.");
-        } else {
-        	int tableId = pid.getTableId();
-        	Page result = Database.getCatalog().getDatabaseFile(tableId).readPage(pid);
-        	cache.put(result.getId(), result);
-        	pagesFilled++;
-        	return result;
+        	evictPage();
         }
+        int tableId = pid.getTableId();
+        Page result = Database.getCatalog().getDatabaseFile(tableId).readPage(pid);
+        cache.put(result.getId(), result);
+        pagesFilled++;
+        return result;
     }
 
     /**
@@ -223,8 +224,23 @@ public class BufferPool {
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
     private synchronized  void evictPage() throws DbException {
-        // some code goes here
-        // not necessary for lab1
+        PageId pid = getRandomPid();
+    	try {
+			flushPage(pid);
+			cache.remove(pid);
+			pagesFilled--;
+		} catch (IOException e) {
+			throw new DbException("Couldn't flush the page with PageId: " + pid);
+		}
+    }
+    
+    private PageId getRandomPid() {
+    	int pidNum = new Random().nextInt(pagesFilled);
+    	Iterator<PageId> it = cache.keySet().iterator();
+    	for (int i = 0; i < pidNum; ++i) {
+    		it.next();
+    	}
+    	return it.next();
     }
 
 }
