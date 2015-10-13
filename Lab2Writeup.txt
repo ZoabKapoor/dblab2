@@ -5,7 +5,7 @@ Partner work:
 I didn't work with a partner.
 
 Time spent:
-I worked at least 20 hours on this lab, in total. Implementing the aggregators and aggregate took a long time. Debugging my Insert and Delete operators also took a long time (the errors turned out to come from the way I had implemented HeapFileIterators - to scan the tuple array instead of the header array).
+I again worked at least 20 hours on this lab, in total. Implementing the aggregators and aggregate took a long time. Debugging my Insert and Delete operators also took a long time (the errors turned out to come from the way I had implemented HeapFileIterators - to scan the tuple array instead of the header array).
 
 Design decisions I made + Changes I made to the API:
 
