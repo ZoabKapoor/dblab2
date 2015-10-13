@@ -11,4 +11,10 @@ Design decisions I made + Changes I made to the API:
 
 1. It seemed to me like for every eviction policy we've seen so far, there are access patterns that can make the eviction policy really good or really bad. Since we don't know what the access patterns are going to look like, there doesn't seem to be a principled way to choose a particular eviction policy over another. In that case, it seemed fair to implement a random eviction policy because if the access pattern is unknown this could be no worse than the other eviction policies we've learned about. So that's what I did.
 
-2. 
+2. I didn't really make any changes to the public APIs of various classes in this lab. I did add some private helper methods (like getRandomPid() in BufferPool) to help organize the code more cleanly. 
+
+3. I had initially implemented a write through cache, where whenever a tuple was inserted or deleted from a page I wrote the affected page to file (ie, I called writePage() in insertTuple and deleteTuple in HeapFile.java). However, Zach pointed out that this would end up wasting a lot of time, especially since we make sure to flush a dirty page before evicting it anyway, so I changed the implementation to a write when cache, where a modified page only gets written to disk when necessary (before evicting it from the BufferPool).
+
+4. In the integer aggregator, I had initially intended to have a switch on operator in mergeTupleIntoGroup, but when I was trying to implement it eclipse complained that I can only switch on an interface, so I changed the switch into a bunch of ifs and else ifs. 
+
+5. In Tuple, I changed resetTupleDesc to not set the fields of the tuple to zero (as it was doing before) in response to a question I asked on Piazza. 
