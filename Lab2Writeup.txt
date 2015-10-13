@@ -1,0 +1,14 @@
+Completion: 
+My lab is complete! The code is complete and passes all systemtests.
+
+Partner work:
+I didn't work with a partner.
+
+Time spent:
+I worked at least 20 hours on this lab, in total. Implementing the aggregators and aggregate took a long time. Debugging my Insert and Delete operators also took a long time (the errors turned out to come from the way I had implemented HeapFileIterators - to scan the tuple array instead of the header array).
+
+Design decisions I made + Changes I made to the API:
+
+1. It seemed to me like for every eviction policy we've seen so far, there are access patterns that can make the eviction policy really good or really bad. Since we don't know what the access patterns are going to look like, there doesn't seem to be a principled way to choose a particular eviction policy over another. In that case, it seemed fair to implement a random eviction policy because if the access pattern is unknown this could be no worse than the other eviction policies we've learned about. So that's what I did.
+
+2. 
